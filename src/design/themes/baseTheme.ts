@@ -20,7 +20,7 @@ type TBodyFontSizes = {
 
 const bodyFontSizes: TBodyFontSizes = {
   [EBodyVariants.paragraph]: `clamp(${fontSizes.md}, 1vw, ${fontSizes.lg})`,
-  [EBodyVariants.label]: `clamp(${fontSizes.lg}, 1vw, ${fontSizes["2xl"]})`,
+  [EBodyVariants.label]: fontSizes.sm,
 };
 
 const baseTheme = {
