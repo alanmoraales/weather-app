@@ -22,19 +22,19 @@ const Home: NextPage = () => (
           destinationName="Acapulco"
           minTemperature="20 °C"
           maxTemperature="35 °C"
-          actionUrl='/destination?name="acapulco"'
+          actionUrl="/destination?name=acapulco"
         />
         <DestinationWeatherCard
           destinationName="Ciudad de México"
           minTemperature="20 °C"
           maxTemperature="35 °C"
-          actionUrl='/destination?name="acapulco"'
+          actionUrl="/destination?name=acapulco"
         />
         <DestinationWeatherCard
           destinationName="Guadalajara"
           minTemperature="20 °C"
           maxTemperature="35 °C"
-          actionUrl='/destination?name="acapulco"'
+          actionUrl="/destination?name=acapulco"
         />
       </Grid>
     </ContentBox>
