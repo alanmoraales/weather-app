@@ -1,13 +1,13 @@
 interface IWeatherData {
   current: {
-    dt: string;
-    temp: string;
+    dt: number;
+    temp: number;
   };
   daily: {
-    dt: string;
+    dt: number;
     temp: {
-      min: string;
-      max: string;
+      min: number;
+      max: number;
     };
   }[];
 }
