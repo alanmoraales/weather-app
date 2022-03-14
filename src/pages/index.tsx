@@ -1,16 +1,28 @@
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Grid } from "@chakra-ui/react";
-import AppBar from "@molecules/AppBar";
 import ContentBox from "@atoms/ContentBox";
 import Heading from "@atoms/Heading";
+import AppBar from "@molecules/AppBar";
 import SearchInput from "@molecules/SearchInput";
 import DestinationWeatherCard from "@molecules/DestinationWeatherCard";
 import placesService from "services/places";
 import weatherService from "services/weather";
 import useFetch from "hooks/useFetch";
-import { IWeatherData } from "@declarations/weather";
+import useForm from "hooks/useForm";
 import routes from "@constants/routes";
 import formatTemperature from "shared/utils/formatTemperature";
+import { IWeatherData } from "@declarations/weather";
+
+interface ISearchDestinationFormValues {
+  destinationName: string;
+}
+
+const searchDestinationFormSchema = yup.object().shape({
+  destinationName: yup.string().required("Ingresa un destino"),
+});
 
 const popularDestinations = {
   acapulco: "Acapulco",
@@ -35,6 +47,7 @@ const getDestinationsWeatherData =
   };
 
 const Home: NextPage = () => {
+  const router = useRouter();
   const { data: acapulcoWeatherData } = useFetch<IWeatherData | undefined>({
     initialData: undefined,
     fetcher: getDestinationsWeatherData(popularDestinations.acapulco),
@@ -47,6 +60,17 @@ const Home: NextPage = () => {
     initialData: undefined,
     fetcher: getDestinationsWeatherData(popularDestinations.guadalajara),
   });
+  const {
+    register,
+    submit,
+    formState: { errors },
+  } = useForm<ISearchDestinationFormValues>({
+    onSubmit: async ({ destinationName }) => {
+      router.push(routes.destination(destinationName));
+    },
+    resolver: yupResolver(searchDestinationFormSchema),
+    displaySuccessMessage: false,
+  });
   const weatherData = {
     [popularDestinations.acapulco]: acapulcoWeatherData,
     [popularDestinations.cdmx]: cdmxWeatherData,
@@ -58,8 +82,12 @@ const Home: NextPage = () => {
       <AppBar />
       <ContentBox paddingY={8} display="grid" gap={8}>
         <Heading>Encuentra tu clima ideal</Heading>
-        <form action="">
-          <SearchInput />
+        <form onSubmit={submit}>
+          <SearchInput
+            {...register("destinationName")}
+            hasError={Boolean(errors.destinationName)}
+            errorMessage={errors.destinationName?.message}
+          />
         </form>
         <Grid gap={4} paddingTop={8}>
           <Heading variant="h6">
