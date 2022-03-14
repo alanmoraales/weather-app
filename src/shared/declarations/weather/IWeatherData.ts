@@ -5,6 +5,7 @@ interface IWeatherData {
   };
   daily: {
     dt: number;
+    humidity: number;
     temp: {
       min: number;
       max: number;
