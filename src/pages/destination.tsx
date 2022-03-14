@@ -12,6 +12,8 @@ import {
   Skeleton,
 } from "@chakra-ui/react";
 import { When, If, Then, Else } from "react-if";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import ContentBox from "@atoms/ContentBox";
 import AppBar from "@molecules/AppBar";
 import Body from "@atoms/Body";
@@ -23,11 +25,21 @@ import { IWeatherData } from "@declarations/weather";
 import placesService from "services/places";
 import weatherService from "services/weather";
 import useFetch from "hooks/useFetch";
+import useForm from "hooks/useForm";
 import moment from "moment";
 import formatTemperature from "shared/utils/formatTemperature";
 import { IPlace } from "@declarations/places";
+import routes from "@constants/routes";
 
 const nextDays = [1, 2, 3, 4, 5, 6, 7];
+
+interface ISearchDestinationFormValues {
+  destinationName: string;
+}
+
+const searchDestinationFormSchema = yup.object().shape({
+  destinationName: yup.string().required("Ingresa un destino"),
+});
 
 const DestinationWeather: NextPage = () => {
   const router = useRouter();
@@ -37,21 +49,33 @@ const DestinationWeather: NextPage = () => {
   >({
     initialData: [],
     fetcher: () => placesService.searchCities({ searchKey }),
+    dependencies: [searchKey],
   });
   const foundCity = resultCities[0];
   const [thereAreNoResults, setThereAreNoResults] = useState(false);
-  const { data: resultWeatherData } = useFetch<IWeatherData | undefined>({
-    initialData: undefined,
-    fetcher: () =>
-      weatherService.getWeatherData({
-        lat: foundCity.lat,
-        long: foundCity.long,
-      }),
-    shouldFetch: Boolean(resultCities.length),
-    dependencies: [resultCities],
-  });
+  const { data: resultWeatherData, isFetching: isFetchingResultWeatherData } =
+    useFetch<IWeatherData | undefined>({
+      initialData: undefined,
+      fetcher: () =>
+        weatherService.getWeatherData({
+          lat: foundCity.lat,
+          long: foundCity.long,
+        }),
+      shouldFetch: Boolean(resultCities.length),
+      dependencies: [resultCities],
+    });
   const { isOpen: searchBoxIsOpen, onOpen: onOpenSearchBox } = useDisclosure();
-  const inputRef = useRef(null);
+  const {
+    register,
+    submit,
+    formState: { errors },
+  } = useForm<ISearchDestinationFormValues>({
+    onSubmit: async ({ destinationName }) => {
+      router.push(routes.destination(destinationName));
+    },
+    resolver: yupResolver(searchDestinationFormSchema),
+    displaySuccessMessage: false,
+  });
   const minTemperature = resultWeatherData?.daily[0]?.temp.min;
   const maxTemperature = resultWeatherData?.daily[0]?.temp.max;
   const currentTemperature = resultWeatherData?.current?.temp;
@@ -65,7 +89,14 @@ const DestinationWeather: NextPage = () => {
       <AppBar />
       <ContentBox paddingY={8} display="grid" gap={8}>
         <When condition={searchBoxIsOpen || thereAreNoResults}>
-          <SearchInput ref={inputRef} shouldFocusOnMount={searchBoxIsOpen} />
+          <form onSubmit={submit}>
+            <SearchInput
+              {...register("destinationName")}
+              hasError={Boolean(errors.destinationName)}
+              errorMessage={errors.destinationName?.message}
+              shouldFocusOnMount={searchBoxIsOpen}
+            />
+          </form>
         </When>
         <If condition={thereAreNoResults}>
           <Then>
@@ -89,7 +120,9 @@ const DestinationWeather: NextPage = () => {
           <Else>
             <Grid gap={2}>
               <Body>El clima de hoy en:</Body>
-              <Skeleton isLoaded={Boolean(foundCity)}>
+              <Skeleton
+                isLoaded={Boolean(foundCity) && !isFetchingResultCities}
+              >
                 <Heading variant="h2">
                   {foundCity?.city_name || "Ciudad de México"}
                 </Heading>
@@ -120,7 +153,11 @@ const DestinationWeather: NextPage = () => {
                   </Heading>
                   {/* TODO add weather icon*/}
                 </Flex>
-                <Skeleton isLoaded={Boolean(currentTemperature)}>
+                <Skeleton
+                  isLoaded={
+                    Boolean(currentTemperature) && !isFetchingResultWeatherData
+                  }
+                >
                   <Heading color="primary">
                     {currentTemperature
                       ? formatTemperature(currentTemperature)
@@ -131,7 +168,11 @@ const DestinationWeather: NextPage = () => {
               <Flex gap={4} alignItems="center" paddingBottom={2}>
                 <Grid gap={1} placeItems="center">
                   <Body variant="label">Min</Body>
-                  <Skeleton isLoaded={Boolean(minTemperature)}>
+                  <Skeleton
+                    isLoaded={
+                      Boolean(minTemperature) && !isFetchingResultWeatherData
+                    }
+                  >
                     <Heading variant="h6" color="primary">
                       {minTemperature
                         ? formatTemperature(minTemperature)
@@ -142,7 +183,11 @@ const DestinationWeather: NextPage = () => {
                 <Body>-</Body>
                 <Grid gap={1} placeItems="center">
                   <Body variant="label">Max</Body>
-                  <Skeleton isLoaded={Boolean(maxTemperature)}>
+                  <Skeleton
+                    isLoaded={
+                      Boolean(maxTemperature) && !isFetchingResultWeatherData
+                    }
+                  >
                     <Heading variant="h6" color="primary">
                       {maxTemperature
                         ? formatTemperature(maxTemperature)
@@ -165,10 +210,14 @@ const DestinationWeather: NextPage = () => {
                     <DayWeatherCard
                       dayName={dayMoment.format("dddd")}
                       minTemperature={
-                        minTemperature ? formatTemperature(minTemperature) : ""
+                        minTemperature && !isFetchingResultWeatherData
+                          ? formatTemperature(minTemperature)
+                          : ""
                       }
                       maxTemperature={
-                        maxTemperature ? formatTemperature(maxTemperature) : ""
+                        maxTemperature && !isFetchingResultWeatherData
+                          ? formatTemperature(maxTemperature)
+                          : ""
                       }
                     />
                     <When condition={dayIndex !== nextDays.length}>
