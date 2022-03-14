@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import Image from "next/image";
-import { useRef, Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
   Grid,
   Flex,
@@ -79,6 +79,16 @@ const DestinationWeather: NextPage = () => {
   const minTemperature = resultWeatherData?.daily[0]?.temp.min;
   const maxTemperature = resultWeatherData?.daily[0]?.temp.max;
   const currentTemperature = resultWeatherData?.current?.temp;
+  const wettestDay = resultWeatherData?.daily.reduce(
+    (wettestDay, { humidity: currentHumidity }, dayIndex) => {
+      const { humidity } = wettestDay;
+      if (humidity < currentHumidity) {
+        return { index: dayIndex, humidity: currentHumidity };
+      }
+      return wettestDay;
+    },
+    { index: 0, humidity: 0 }
+  );
 
   useEffect(() => {
     setThereAreNoResults(!resultCities.length && !isFetchingResultCities);
@@ -219,6 +229,7 @@ const DestinationWeather: NextPage = () => {
                           ? formatTemperature(maxTemperature)
                           : ""
                       }
+                      isWettestDay={wettestDay?.index === dayIndex}
                     />
                     <When condition={dayIndex !== nextDays.length}>
                       <Divider />
