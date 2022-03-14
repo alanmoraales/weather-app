@@ -4,7 +4,14 @@ import {
   FocusEventHandler,
   useEffect,
 } from "react";
-import { FormControl, FormLabel, Input, Box, Button } from "@chakra-ui/react";
+import {
+  FormControl,
+  FormLabel,
+  Input,
+  Box,
+  Button,
+  FormErrorMessage,
+} from "@chakra-ui/react";
 import Heading from "@atoms/Heading";
 
 interface ISearchInput {
@@ -14,6 +21,8 @@ interface ISearchInput {
   onChange?: ChangeEventHandler<HTMLInputElement>;
   onBlur?: FocusEventHandler<HTMLInputElement>;
   shouldFocusOnMount?: boolean;
+  errorMessage?: string;
+  hasError?: boolean;
 }
 
 // Doesn't recognize component's name due to the use of forwardRef
@@ -25,6 +34,8 @@ const SearchInput = forwardRef<HTMLInputElement, ISearchInput>(
       placeholder = "Ej. Acapulco",
       name = "searchKey",
       shouldFocusOnMount = false,
+      hasError = false,
+      errorMessage = "",
       ...inputProps
     },
     ref
@@ -36,7 +47,7 @@ const SearchInput = forwardRef<HTMLInputElement, ISearchInput>(
     }, [ref, shouldFocusOnMount]);
 
     return (
-      <FormControl>
+      <FormControl isInvalid={hasError}>
         <FormLabel htmlFor={name}>
           <Heading variant="h6">{label}</Heading>
         </FormLabel>
@@ -72,6 +83,7 @@ const SearchInput = forwardRef<HTMLInputElement, ISearchInput>(
             </Heading>
           </Button>
         </Box>
+        <FormErrorMessage>{errorMessage}</FormErrorMessage>
       </FormControl>
     );
   }
