@@ -1,4 +1,5 @@
 import type { NextPage } from "next";
+import { connect } from "react-redux";
 import { useRouter } from "next/router";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -119,4 +120,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default connect((state) => state)(Home);

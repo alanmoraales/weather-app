@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
+import { connect } from "react-redux";
 import Image from "next/image";
 import { Fragment, useState, useEffect } from "react";
 import {
@@ -30,6 +31,8 @@ import moment from "moment";
 import formatTemperature from "shared/utils/formatTemperature";
 import { IPlace } from "@declarations/places";
 import routes from "@constants/routes";
+import { useActions } from "redux/hooks/useActions";
+import { useTypedSelector } from "redux/hooks/useTypedSelector";
 
 const nextDays = [1, 2, 3, 4, 5, 6, 7];
 
@@ -44,26 +47,37 @@ const searchDestinationFormSchema = yup.object().shape({
 const DestinationWeather: NextPage = () => {
   const router = useRouter();
   const searchKey = router.query.name as string;
-  const { data: resultCities, isFetching: isFetchingResultCities } = useFetch<
-    IPlace[]
-  >({
-    initialData: [],
-    fetcher: () => placesService.searchCities({ searchKey }),
-    dependencies: [searchKey],
-  });
-  const foundCity = resultCities[0];
-  const [thereAreNoResults, setThereAreNoResults] = useState(false);
-  const { data: resultWeatherData, isFetching: isFetchingResultWeatherData } =
-    useFetch<IWeatherData | undefined>({
-      initialData: undefined,
-      fetcher: () =>
-        weatherService.getWeatherData({
-          lat: foundCity.lat,
-          long: foundCity.long,
-        }),
-      shouldFetch: Boolean(resultCities.length),
-      dependencies: [resultCities],
-    });
+  const {
+    destinationName,
+    wettestDayIndex,
+    dailyWeather,
+    isFetching,
+    thereAreNoResults,
+    currentMaxTemperature,
+    currentMinTemperature,
+    currentTemperature,
+  } = useTypedSelector((state) => state.weatherSearch);
+  const { weatherSearchAction } = useActions();
+  // const { data: resultCities, isFetching: isFetchingResultCities } = useFetch<
+  //   IPlace[]
+  // >({
+  //   initialData: [],
+  //   fetcher: () => placesService.searchCities({ searchKey }),
+  //   dependencies: [searchKey],
+  // });
+  // const foundCity = resultCities[0];
+  // const [thereAreNoResults, setThereAreNoResults] = useState(false);
+  // const { data: resultWeatherData, isFetching: isFetchingResultWeatherData } =
+  //   useFetch<IWeatherData | undefined>({
+  //     initialData: undefined,
+  //     fetcher: () =>
+  //       weatherService.getWeatherData({
+  //         lat: foundCity.lat,
+  //         long: foundCity.long,
+  //       }),
+  //     shouldFetch: Boolean(resultCities.length),
+  //     dependencies: [resultCities],
+  //   });
   const { isOpen: searchBoxIsOpen, onOpen: onOpenSearchBox } = useDisclosure();
   const {
     register,
@@ -76,23 +90,23 @@ const DestinationWeather: NextPage = () => {
     resolver: yupResolver(searchDestinationFormSchema),
     displaySuccessMessage: false,
   });
-  const minTemperature = resultWeatherData?.daily[0]?.temp.min;
-  const maxTemperature = resultWeatherData?.daily[0]?.temp.max;
-  const currentTemperature = resultWeatherData?.current?.temp;
-  const wettestDay = resultWeatherData?.daily.reduce(
-    (wettestDay, { humidity: currentHumidity }, dayIndex) => {
-      const { humidity } = wettestDay;
-      if (humidity < currentHumidity) {
-        return { index: dayIndex, humidity: currentHumidity };
-      }
-      return wettestDay;
-    },
-    { index: 0, humidity: 0 }
-  );
+  // const minTemperature = resultWeatherData?.daily[0]?.temp.min;
+  // const maxTemperature = resultWeatherData?.daily[0]?.temp.max;
+  // const currentTemperature = resultWeatherData?.current?.temp;
+  // const wettestDay = resultWeatherData?.daily.reduce(
+  //   (wettestDay, { humidity: currentHumidity }, dayIndex) => {
+  //     const { humidity } = wettestDay;
+  //     if (humidity < currentHumidity) {
+  //       return { index: dayIndex, humidity: currentHumidity };
+  //     }
+  //     return wettestDay;
+  //   },
+  //   { index: 0, humidity: 0 }
+  // );
 
-  useEffect(() => {
-    setThereAreNoResults(!resultCities.length && !isFetchingResultCities);
-  }, [resultCities, isFetchingResultCities]);
+  // useEffect(() => {
+  //   setThereAreNoResults(!resultCities.length && !isFetchingResultCities);
+  // }, [resultCities, isFetchingResultCities]);
 
   return (
     <>
@@ -130,11 +144,9 @@ const DestinationWeather: NextPage = () => {
           <Else>
             <Grid gap={2}>
               <Body>El clima de hoy en:</Body>
-              <Skeleton
-                isLoaded={Boolean(foundCity) && !isFetchingResultCities}
-              >
+              <Skeleton isLoaded={Boolean(destinationName) && !isFetching}>
                 <Heading variant="h2">
-                  {foundCity?.city_name || "Ciudad de México"}
+                  {destinationName || "Ciudad de México"}
                 </Heading>
               </Skeleton>
               <Button
@@ -163,11 +175,7 @@ const DestinationWeather: NextPage = () => {
                   </Heading>
                   {/* TODO add weather icon*/}
                 </Flex>
-                <Skeleton
-                  isLoaded={
-                    Boolean(currentTemperature) && !isFetchingResultWeatherData
-                  }
-                >
+                <Skeleton isLoaded={Boolean(currentTemperature) && !isFetching}>
                   <Heading color="primary">
                     {currentTemperature
                       ? formatTemperature(currentTemperature)
@@ -179,13 +187,11 @@ const DestinationWeather: NextPage = () => {
                 <Grid gap={1} placeItems="center">
                   <Body variant="label">Min</Body>
                   <Skeleton
-                    isLoaded={
-                      Boolean(minTemperature) && !isFetchingResultWeatherData
-                    }
+                    isLoaded={Boolean(currentMinTemperature) && !isFetching}
                   >
                     <Heading variant="h6" color="primary">
-                      {minTemperature
-                        ? formatTemperature(minTemperature)
+                      {currentMinTemperature
+                        ? formatTemperature(currentMinTemperature)
                         : "27 °C"}
                     </Heading>
                   </Skeleton>
@@ -194,13 +200,11 @@ const DestinationWeather: NextPage = () => {
                 <Grid gap={1} placeItems="center">
                   <Body variant="label">Max</Body>
                   <Skeleton
-                    isLoaded={
-                      Boolean(maxTemperature) && !isFetchingResultWeatherData
-                    }
+                    isLoaded={Boolean(currentMaxTemperature) && !isFetching}
                   >
                     <Heading variant="h6" color="primary">
-                      {maxTemperature
-                        ? formatTemperature(maxTemperature)
+                      {currentMaxTemperature
+                        ? formatTemperature(currentMaxTemperature)
                         : "27 °C"}
                     </Heading>
                   </Skeleton>
@@ -211,25 +215,23 @@ const DestinationWeather: NextPage = () => {
               <Heading variant="h6">Próximo 7 días</Heading>
               {nextDays.map((dayIndex) => {
                 const dayMoment = moment().add(dayIndex, "days");
-                const minTemperature =
-                  resultWeatherData?.daily[dayIndex]?.temp.min;
-                const maxTemperature =
-                  resultWeatherData?.daily[dayIndex]?.temp.max;
+                const minTemperature = dailyWeather[dayIndex]?.temp.min;
+                const maxTemperature = dailyWeather[dayIndex]?.temp.max;
                 return (
                   <Fragment key={dayIndex}>
                     <DayWeatherCard
                       dayName={dayMoment.format("dddd")}
                       minTemperature={
-                        minTemperature && !isFetchingResultWeatherData
+                        minTemperature && !isFetching
                           ? formatTemperature(minTemperature)
                           : ""
                       }
                       maxTemperature={
-                        maxTemperature && !isFetchingResultWeatherData
+                        maxTemperature && !isFetching
                           ? formatTemperature(maxTemperature)
                           : ""
                       }
-                      isWettestDay={wettestDay?.index === dayIndex}
+                      isWettestDay={wettestDayIndex === dayIndex}
                     />
                     <When condition={dayIndex !== nextDays.length}>
                       <Divider />
@@ -245,4 +247,4 @@ const DestinationWeather: NextPage = () => {
   );
 };
 
-export default DestinationWeather;
+export default connect((state) => state)(DestinationWeather);
