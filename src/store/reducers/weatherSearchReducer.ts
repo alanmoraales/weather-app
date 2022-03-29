@@ -1,9 +1,9 @@
-import { IReduxAction } from "redux/declarations/common";
+import { IReduxAction } from "store/declarations/common";
 import {
   EWeatherSearchActionTypes,
   IWeatherSearchState,
   IWeatherSearchPayload,
-} from "redux/declarations/weatherSearch";
+} from "store/declarations/weatherSearch";
 
 const initialState: IWeatherSearchState = {
   thereAreNoResults: false,
@@ -47,6 +47,8 @@ const weatherSearchReducer = (
         hasError: true,
         thereAreNoResults: false,
       };
+    default:
+      return state;
   }
 };
 

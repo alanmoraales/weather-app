@@ -1,9 +1,9 @@
 import { Dispatch } from "redux";
-import { IReduxAction } from "redux/declarations/common";
+import { IReduxAction } from "store/declarations/common";
 import {
   EWeatherSearchActionTypes,
   IWeatherSearchPayload,
-} from "redux/declarations/weatherSearch";
+} from "store/declarations/weatherSearch";
 import placesService from "services/places";
 import weatherService from "services/weather";
 
