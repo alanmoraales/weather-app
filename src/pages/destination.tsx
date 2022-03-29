@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { connect } from "react-redux";
 import Image from "next/image";
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import {
   Grid,
   Flex,
@@ -22,17 +22,12 @@ import Heading from "@atoms/Heading";
 import DayWeatherCard from "@molecules/DayWeatherCard";
 import SearchInput from "@molecules/SearchInput";
 import assets from "@constants/assets";
-import { IWeatherData } from "@declarations/weather";
-import placesService from "services/places";
-import weatherService from "services/weather";
-import useFetch from "hooks/useFetch";
 import useForm from "hooks/useForm";
 import moment from "moment";
 import formatTemperature from "shared/utils/formatTemperature";
-import { IPlace } from "@declarations/places";
 import routes from "@constants/routes";
-import { useActions } from "redux/hooks/useActions";
-import { useTypedSelector } from "redux/hooks/useTypedSelector";
+import { useActions } from "store/hooks/useActions";
+import { useTypedSelector } from "store/hooks/useTypedSelector";
 
 const nextDays = [1, 2, 3, 4, 5, 6, 7];
 
@@ -58,26 +53,6 @@ const DestinationWeather: NextPage = () => {
     currentTemperature,
   } = useTypedSelector((state) => state.weatherSearch);
   const { weatherSearchAction } = useActions();
-  // const { data: resultCities, isFetching: isFetchingResultCities } = useFetch<
-  //   IPlace[]
-  // >({
-  //   initialData: [],
-  //   fetcher: () => placesService.searchCities({ searchKey }),
-  //   dependencies: [searchKey],
-  // });
-  // const foundCity = resultCities[0];
-  // const [thereAreNoResults, setThereAreNoResults] = useState(false);
-  // const { data: resultWeatherData, isFetching: isFetchingResultWeatherData } =
-  //   useFetch<IWeatherData | undefined>({
-  //     initialData: undefined,
-  //     fetcher: () =>
-  //       weatherService.getWeatherData({
-  //         lat: foundCity.lat,
-  //         long: foundCity.long,
-  //       }),
-  //     shouldFetch: Boolean(resultCities.length),
-  //     dependencies: [resultCities],
-  //   });
   const { isOpen: searchBoxIsOpen, onOpen: onOpenSearchBox } = useDisclosure();
   const {
     register,
@@ -90,23 +65,12 @@ const DestinationWeather: NextPage = () => {
     resolver: yupResolver(searchDestinationFormSchema),
     displaySuccessMessage: false,
   });
-  // const minTemperature = resultWeatherData?.daily[0]?.temp.min;
-  // const maxTemperature = resultWeatherData?.daily[0]?.temp.max;
-  // const currentTemperature = resultWeatherData?.current?.temp;
-  // const wettestDay = resultWeatherData?.daily.reduce(
-  //   (wettestDay, { humidity: currentHumidity }, dayIndex) => {
-  //     const { humidity } = wettestDay;
-  //     if (humidity < currentHumidity) {
-  //       return { index: dayIndex, humidity: currentHumidity };
-  //     }
-  //     return wettestDay;
-  //   },
-  //   { index: 0, humidity: 0 }
-  // );
 
-  // useEffect(() => {
-  //   setThereAreNoResults(!resultCities.length && !isFetchingResultCities);
-  // }, [resultCities, isFetchingResultCities]);
+  useEffect(() => {
+    if (searchKey) {
+      weatherSearchAction(searchKey);
+    }
+  }, [searchKey]);
 
   return (
     <>
